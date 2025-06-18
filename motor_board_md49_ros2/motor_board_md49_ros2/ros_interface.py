@@ -3,7 +3,8 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
-from nav_msgs.msg import Odometry, JointState
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import JointState 
 from geometry_msgs.msg import Quaternion
 from tf_transformations import quaternion_from_euler
 from tf2_ros import TransformBroadcaster
