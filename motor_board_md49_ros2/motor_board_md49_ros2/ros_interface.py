@@ -36,7 +36,7 @@ class MotorBoardNode(Node):
         # Parámetros de las ruedas
         self.wheel_sep = self.get_parameter('wheel_separation').value
         self.wheel_rad = self.get_parameter('wheel_radius').value
-        self.publish_odometry = self.get_parameter('publish_odometry').value
+        self.pub_odometry = self.get_parameter('publish_odometry').value
 
         self.initialize_motor_board()
 
@@ -160,7 +160,7 @@ class MotorBoardNode(Node):
         self.publish_joint_states(speed1, speed2)
         
         # Publicar odometría
-        if self.publish_odometry:
+        if self.pub_odometry:
             # Solo publicar odometría si está habilitado
             self.get_logger().info("Publicando odometría...")
             self.publish_odometry(speed1, speed2)
