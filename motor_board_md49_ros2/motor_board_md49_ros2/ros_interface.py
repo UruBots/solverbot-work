@@ -97,8 +97,8 @@ class MotorBoardNode(Node):
     def cmd_vel_callback(self, msg: Twist):
         """Convierte Twist a velocidades del MD49."""
         # Limitar velocidades
-        linear = max(min(msg.linear.x, self.max_linear), -self.max_linear)
-        angular = max(min(msg.angular.z, self.max_angular), -self.max_angular)
+        linear = max(min(msg.linear.x, self.max_linear_speed), -self.max_linear_speed)
+        angular = max(min(msg.angular.z, self.max_angular_speed), -self.max_angular_speed)
 
         # Calcular velocidades de ruedas (differential drive)
         left = (linear - angular * self.wheel_sep / 2) / self.wheel_rad
