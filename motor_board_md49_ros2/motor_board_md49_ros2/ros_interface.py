@@ -239,8 +239,9 @@ class MotorBoardNode(Node):
         # Publicar la transformación tf de odom -> base_link
         t = TransformStamped()
         t.header.stamp = current_time.to_msg()
-        t.header.frame_id = "odom"
-        t.child_frame_id = "base_link"
+        #t.header.frame_id = "odom"
+        t.header.frame_id = "base_footprint"
+        #t.child_frame_id = "base_link"
 
         t.transform.translation.x = self.x
         t.transform.translation.y = self.y
