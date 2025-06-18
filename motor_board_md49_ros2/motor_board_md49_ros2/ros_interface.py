@@ -3,9 +3,11 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, JointState
 from geometry_msgs.msg import Quaternion
 from tf_transformations import quaternion_from_euler
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
 from motor_board_md49_ros2.motor_board import MotorBoardMD49
 
 class MotorBoardNode(Node):
@@ -47,12 +49,21 @@ class MotorBoardNode(Node):
 
         # Publicar odometría
         self.odom_publisher = self.create_publisher(Odometry, '/odom', 10)
+        # TransformBroadcaster para odometría
+        self.tf_broadcaster = TransformBroadcaster(self)
+        # Publicar estados de las articulaciones
+        self.joint_state_publisher = self.create_publisher(JointState, '/joint_states', 10)
+
 
         # Estado de odometría
         self.x = 0.0
         self.y = 0.0
         self.th = 0.0
         self.last_time = self.get_clock().now()
+
+        # Posiciones de las ruedas
+        self.left_wheel_pos = 0.0
+        self.right_wheel_pos = 0.0
 
         # Publicar la velocidad de los motores
         self.speed1_publisher = self.create_publisher(Int32, '/motor_speed_1', 10)
@@ -143,12 +154,39 @@ class MotorBoardNode(Node):
             self.speed1_publisher.publish(Int32(data=speed1))
         if speed2 is not None:
             self.speed2_publisher.publish(Int32(data=speed2))
+
+        # Publicar estados de las articulaciones
+        self.publish_joint_states(speed1, speed2)
         
         # Publicar odometría
         if self.publish_odometry:
             # Solo publicar odometría si está habilitado
             self.get_logger().info("Publicando odometría...")
             self.publish_odometry(speed1, speed2)
+
+    def publish_joint_states(self, speed1, speed2):
+        """Publica el estado de las articulaciones."""
+        current_time = self.get_clock().now()
+        dt = (current_time - self.last_time).nanoseconds * 1e-9
+        self.last_time = current_time
+        
+        # Convertir velocidades a rad/s normalizados
+        left_vel = (speed1 - 128) / 127.0
+        right_vel = (speed2 - 128) / 127.0
+
+        v_left = left_vel * self.wheel_rad
+        v_right = right_vel * self.wheel_rad
+
+        # Actualizar posición angular
+        self.left_wheel_pos += v_left * dt / self.wheel_rad
+        self.right_wheel_pos += v_right * dt / self.wheel_rad
+
+        # Publicar joint_states
+        joint_state = JointState()
+        joint_state.header.stamp = current_time.to_msg()
+        joint_state.name = ['left_wheel_joint', 'right_wheel_joint']
+        joint_state.position = [self.left_wheel_pos, self.right_wheel_pos]
+        self.joint_state_publisher.publish(joint_state)
 
     def publish_odometry(self, speed1, speed2):
         # Tiempo actual y delta t
@@ -195,6 +233,19 @@ class MotorBoardNode(Node):
         odom.twist.twist.angular.z = w
 
         self.odom_publisher.publish(odom)
+
+        # Publicar la transformación tf de odom -> base_link
+        t = TransformStamped()
+        t.header.stamp = current_time.to_msg()
+        t.header.frame_id = "odom"
+        t.child_frame_id = "base_link"
+
+        t.transform.translation.x = self.x
+        t.transform.translation.y = self.y
+        t.transform.translation.z = 0.0
+        t.transform.rotation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+        self.tf_broadcaster.sendTransform(t)
 
 
     def destroy_node(self):
