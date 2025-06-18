@@ -21,6 +21,7 @@ class MotorBoardNode(Node):
                 ('max_angular_speed', 1.0), # Velocidad angular máxima en rad/s
                 ('wheel_separation', 0.5),  # Distancia entre ruedas (metros)
                 ('wheel_radius', 0.1),      # Radio de ruedas (metros)
+                ('publish_odometry', False)  # Publicar odometría
             ]
         )
 
@@ -32,6 +33,7 @@ class MotorBoardNode(Node):
         # Parámetros de las ruedas
         self.wheel_sep = self.get_parameter('wheel_separation').value
         self.wheel_rad = self.get_parameter('wheel_radius').value
+        self.publish_odometry = self.get_parameter('publish_odometry').value
 
         self.initialize_motor_board()
 
@@ -64,7 +66,7 @@ class MotorBoardNode(Node):
     def initialize_motor_board(self):
         """Inicializa la conexión con la placa MD49."""
         try:
-            self.motor_board = MotorBoardMD49(self.port, self.baudrate)
+            self.motor_board = MotorBoardMD49(self.serial_port, self.baudrate)
             self.get_logger().info("Intentando conectar con MotorBoardMD49...")
             if self.check_connection():
                 self.get_logger().info("Conexión MD49 exitosa!")
@@ -94,19 +96,13 @@ class MotorBoardNode(Node):
 
     def cmd_vel_callback(self, msg: Twist):
         """Convierte Twist a velocidades del MD49."""
-        # Obtener parámetros
-        max_linear = self.get_parameter('max_linear_speed').value
-        max_angular = self.get_parameter('max_angular_speed').value
-        wheel_sep = self.get_parameter('wheel_separation').value
-        wheel_rad = self.get_parameter('wheel_radius').value
-
         # Limitar velocidades
-        linear = max(min(msg.linear.x, max_linear), -max_linear)
-        angular = max(min(msg.angular.z, max_angular), -max_angular)
+        linear = max(min(msg.linear.x, self.max_linear), -self.max_linear)
+        angular = max(min(msg.angular.z, self.max_angular), -self.max_angular)
 
         # Calcular velocidades de ruedas (differential drive)
-        left = (linear - angular * wheel_sep / 2) / wheel_rad
-        right = (linear + angular * wheel_sep / 2) / wheel_rad
+        left = (linear - angular * self.wheel_sep / 2) / self.wheel_rad
+        right = (linear + angular * self.wheel_sep / 2) / self.wheel_rad
 
         # Mapear a rango MD49 (0-255)
         left_mapped = self.map_speed(left)
@@ -149,7 +145,10 @@ class MotorBoardNode(Node):
             self.speed2_publisher.publish(Int32(data=speed2))
         
         # Publicar odometría
-        self.publish_odometry(speed1, speed2)
+        if self.publish_odometry:
+            # Solo publicar odometría si está habilitado
+            self.get_logger().info("Publicando odometría...")
+            self.publish_odometry(speed1, speed2)
 
     def publish_odometry(self, speed1, speed2):
         # Tiempo actual y delta t

@@ -6,3 +6,4 @@ motor_board_node:
     max_angular_speed: 1.0
     wheel_separation: 0.3    # Distancia entre ruedas (metros)
     wheel_radius: 0.1        # Radio de las ruedas (metros)
+    publish_odometry: False
