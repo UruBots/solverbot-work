@@ -9,6 +9,7 @@ from geometry_msgs.msg import Quaternion
 from tf_transformations import quaternion_from_euler
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
+from tf2_ros import StaticTransformBroadcaster
 from motor_board_md49_ros2.motor_board import MotorBoardMD49
 
 class MotorBoardNode(Node):
@@ -54,7 +55,8 @@ class MotorBoardNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         # Publicar estados de las articulaciones
         self.joint_state_publisher = self.create_publisher(JointState, '/joint_states', 10)
-
+        # StaticTransformBroadcaster para la transformación estática
+        self.static_broadcaster = StaticTransformBroadcaster(self)
 
         # Estado de odometría
         self.x = 0.0
@@ -72,6 +74,7 @@ class MotorBoardNode(Node):
 
         # Timer para leer datos periódicamente
         self.timer = self.create_timer(0.1, self.publish_motor_speeds)
+        self.send_static_transforms()
         self.get_logger().info("MotorBoardNode inicializado")
 
     
@@ -250,6 +253,27 @@ class MotorBoardNode(Node):
         tf.transform.rotation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
         self.tf_broadcaster.sendTransform(tf)
+
+    def send_static_transforms(self):
+        t1 = TransformStamped()
+        t1.header.stamp = self.get_clock().now().to_msg()
+        t1.header.frame_id = 'base_footprint'
+        t1.child_frame_id = 'imu_link'
+        t1.transform.translation.x = 0.0
+        t1.transform.translation.y = 0.0
+        t1.transform.translation.z = 0.1
+        t1.transform.rotation.w = 1.0
+        self.static_broadcaster.sendTransform(t1)
+
+        t2 = TransformStamped()
+        t2.header.stamp = self.get_clock().now().to_msg()
+        t2.header.frame_id = 'base_footprint'
+        t2.child_frame_id = 'base_scan'
+        t2.transform.translation.x = 0.1
+        t2.transform.translation.y = 0.0
+        t2.transform.translation.z = 0.2
+        t2.transform.rotation.w = 1.0
+        self.static_broadcaster.sendTransform(t2)
 
 
     def destroy_node(self):
