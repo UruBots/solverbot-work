@@ -184,6 +184,7 @@ class MotorBoardNode(Node):
 
         # Publicar joint_states
         joint_state = JointState()
+        joint_state.header.frame_id = "base_footprint"
         joint_state.header.stamp = current_time.to_msg()
         joint_state.name = ['left_wheel_joint', 'right_wheel_joint']
         joint_state.position = [self.left_wheel_pos, self.right_wheel_pos]
@@ -239,7 +240,7 @@ class MotorBoardNode(Node):
         # Publicar la transformación tf de odom -> base_link
         t = TransformStamped()
         t.header.stamp = current_time.to_msg()
-        #t.header.frame_id = "odom"
+        t.header.frame_id = "odom"
         t.header.frame_id = "base_footprint"
         #t.child_frame_id = "base_link"
 
