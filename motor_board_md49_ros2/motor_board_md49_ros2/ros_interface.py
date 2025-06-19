@@ -238,18 +238,18 @@ class MotorBoardNode(Node):
         self.odom_publisher.publish(odom)
 
         # Publicar la transformación tf de odom -> base_link
-        t = TransformStamped()
-        t.header.stamp = current_time.to_msg()
-        t.header.frame_id = "odom"
-        t.header.frame_id = "base_footprint"
+        tf = TransformStamped()
+        tf.header.stamp = current_time.to_msg()
+        tf.header.frame_id = "odom"
+        tf.child_frame_id = "base_footprint"
         #t.child_frame_id = "base_link"
 
-        t.transform.translation.x = self.x
-        t.transform.translation.y = self.y
-        t.transform.translation.z = 0.0
-        t.transform.rotation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        tf.transform.translation.x = self.x
+        tf.transform.translation.y = self.y
+        tf.transform.translation.z = 0.0
+        tf.transform.rotation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
-        self.tf_broadcaster.sendTransform(t)
+        self.tf_broadcaster.sendTransform(tf)
 
 
     def destroy_node(self):
