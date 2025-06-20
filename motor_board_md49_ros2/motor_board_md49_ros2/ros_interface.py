@@ -74,7 +74,7 @@ class MotorBoardNode(Node):
 
         # Timer para leer datos periódicamente
         self.timer = self.create_timer(0.1, self.publish_motor_speeds)
-        self.send_static_transforms()
+        #self.send_static_transforms()
         self.get_logger().info("MotorBoardNode inicializado")
 
     
@@ -158,15 +158,14 @@ class MotorBoardNode(Node):
             self.speed1_publisher.publish(Int32(data=speed1))
         if speed2 is not None:
             self.speed2_publisher.publish(Int32(data=speed2))
-
-        # Publicar estados de las articulaciones
-        self.publish_joint_states(speed1, speed2)
         
         # Publicar odometría
         if self.pub_odometry:
             # Solo publicar odometría si está habilitado
             self.get_logger().info("Publicando odometría...")
             self.publish_odometry(speed1, speed2)
+            # Publicar estados de las articulaciones
+            self.publish_joint_states(speed1, speed2)
 
     def publish_joint_states(self, speed1, speed2):
         """Publica el estado de las articulaciones."""
