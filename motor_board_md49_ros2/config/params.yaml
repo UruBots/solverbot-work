@@ -4,6 +4,6 @@ motor_board_node:
     baudrate: 38400
     max_linear_speed: 0.5    # Ajustar según tus motores
     max_angular_speed: 1.0
-    wheel_separation: 0.3    # Distancia entre ruedas (metros)
-    wheel_radius: 0.1        # Radio de las ruedas (metros)
+    wheel_separation: 0.03    # Distancia entre ruedas (metros)
+    wheel_radius: 0.01        # Radio de las ruedas (metros)
     publish_odometry: False
